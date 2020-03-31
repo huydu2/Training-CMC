@@ -1,0 +1,43 @@
+service redis stop
+service redis-sentinel stop
+####Trên 3 node: vi /etc/redis-sentinel.conf
+protected-mode no
+port 26379
+daemonize yes
+pidfile "/var/run/redis-sentinel.pid"
+logfile "/var/log/redis/sentinel.log"
+dir .
+sentinel deny-scripts-reconfig yes
+sentinel monitor redis-share 10.0.0.21 6379 2
+sentinel down-after-milliseconds redis-share 5000
+sentinel failover-timeout redis-share 10000
+===================================================
+vi /etc/redis.conf
+####Master
+#bind 127.0.0.1
+maxmemory-policy noeviction
+tcp-keepalive 60
+appendonly yes
+appendfilename "appendonly.aof"
+protected-mode no
+dir "/var/lib/redis"
+logfile /var/log/redis/redis.log
+replica-priority 100
+
+####Slave
+#bind 127.0.0.1
+slaveof 10.0.0.21 6379
+appendonly yes
+appendfilename "appendonly.aof"
+protected-mode no
+dir "/var/lib/redis"
+logfile /var/log/redis/redis.log
+replica-priority 150
+#replica-priority 200 => tren may thu 3 
+====================================================
+#rm -rf /var/log/redis/*
+redis-cli -p 26379
+SENTINEL FAILOVER redis-share
+redis-cli -p 6379 DEBUG sleep 30
+tailf /var/log/redis/redis.log
+tailf /var/log/redis/sentinel.log
