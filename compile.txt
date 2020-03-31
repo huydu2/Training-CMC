@@ -1,0 +1,137 @@
+yum group install "Development Tools"
+yum install pcre-devel
+yum install zlib-devel.x86_64
+yum install openssl.x86_64
+yum install openssl-devel.x86_64
+cd /opt
+wget https://mirror.downloadvn.com/apache//apr/apr-1.7.0.tar.gz
+wget https://mirror.downloadvn.com/apache//apr/apr-util-1.6.1.tar.gz
+tar xvfz apr-1.7.0.tar.gz
+tar xvfz apr-util-1.6.1.tar.gz
+
+mv /opt/apr-1.7.0 /root/httpd-2.4.41/srclib/apr
+mv /opt/apr-util-1.6.1 /root/httpd-2.4.41/srclib/apr-util
+
+# cd /root/httpd-2.4.41
+
+./configure "--with-mpm=prefork" "--prefix=/opt/httpd/" "--exec-prefix=/opt/httpd/" "--sysconfdir=/opt/httpd/conf" "--sbindir=/opt/httpd/bin" "--bindir=/opt/httpd/bin" "--datadir=/var/www" "--mandir=/opt/httpd/man" "--libdir=/opt/httpd/lib" "--libexecdir=/opt/httpd/modules" "--includedir=/opt/httpd/include" "--enable-auth" "--enable-cgid" "--enable-cgi" "--enable-dav" "--enable-dav-fs" "--enable-dav-lock" "--enable-deflate" "--enable-dir" "--enable-expires" "--enable-headers" "--enable-log-config" "--enable-mime" "--enable-mime-magic" "--enable-mods-shared=most" "--enable-reqtimeout" "--enable-rewrite" "--enable-so" "--enable-ssl" "--enable-suexec" "--enable-status" "--enable-static-support" "--enable-unique-id" "--enable-static-htpasswd" "--enable-static-rotatelogs" "--disable-asis" "--disable-auth-anon" "--disable-auth-dbm" "--disable-auth-digest" "--disable-autoindex" "--disable-cache" "--disable-case-filter" "--disable-case-filter-in" "--disable-cern-meta" "--disable-disk-cache" "--disable-ext-filter" "--disable-file-cache" "--disable-filter" "--disable-imap" "--disable-info" "--disable-mem-cache" "--disable-proxy" "--disable-proxy-connect" "--disable-proxy-ftp" "--disable-proxy-http" "--disable-speling" "--disable-usertrack" "--disable-version" "--with-included-apr" "--with-pcre=/usr/lib/bin/pcre-config" "--with-ssl=/usr/local/src/openssl-1.0.2j" "--enable-ssl-staticlib-deps"
+
+
+# ./configure \
+	"--with-mpm=prefork" \
+	"--prefix=/opt/httpd/" \
+	"--exec-prefix=/opt/httpd/" \
+	"--sysconfdir=/opt/httpd/conf" \
+	"--sbindir=/opt/httpd/bin" \
+	"--bindir=/opt/httpd/bin" \
+	"--datadir=/var/www" \
+	"--mandir=/opt/httpd/man" \
+	"--libdir=/opt/httpd/lib" \
+	"--libexecdir=/opt/httpd/modules" \
+	"--includedir=/opt/httpd/include" \
+	"--enable-auth" \
+	"--enable-cgid" \
+	"--enable-cgi" \
+	"--enable-dav" \
+	"--enable-dav-fs" \
+	"--enable-dav-lock" \
+	"--enable-deflate" \
+	"--enable-dir" \
+	"--enable-expires" \
+	"--enable-headers" \
+	"--enable-log-config" \
+	"--enable-mime" \
+	"--enable-mime-magic" \
+	"--enable-mods-shared=most" \
+	"--enable-reqtimeout" \
+	"--enable-rewrite" \
+	"--enable-so" \
+	"--enable-ssl" \
+	"--enable-suexec" \
+	"--enable-status" \
+	"--enable-static-support" \
+	"--enable-unique-id" \
+	"--enable-static-htpasswd" \
+	"--enable-static-rotatelogs" \
+	"--disable-asis" \
+	"--disable-auth-anon" \
+	"--disable-auth-dbm" \
+	"--disable-auth-digest" \
+	"--disable-autoindex" \
+	"--disable-cache" \
+	"--disable-case-filter" \
+	"--disable-case-filter-in" \
+	"--disable-cern-meta" \
+	"--disable-disk-cache" \
+	"--disable-ext-filter" \
+	"--disable-file-cache" \
+	"--disable-filter" \
+	"--disable-imap" \
+	"--disable-info" \
+	"--disable-mem-cache" \
+	"--disable-proxy" \
+	"--disable-proxy-connect" \
+	"--disable-proxy-ftp" \
+	"--disable-proxy-http" \
+	"--disable-speling" \
+	"--disable-usertrack" \
+	"--disable-version" \
+	"--with-included-apr" \
+	"--with-pcre=/usr/lib/bin/pcre-config" \
+	"--with-ssl=/usr/local/src/openssl-1.0.2j" \
+	"--enable-ssl-staticlib-deps" \
+	"--enable-mods-static=ssl"
+
+# make && make install
+
+=================================================
+
+# vi /usr/lib/systemd/system/httpd.service
+
+[Unit]
+Description=The Apache HTTP Server
+
+[Service]
+Type=forking
+EnvironmentFile=/opt/httpd/bin/envvars
+PIDFile=/opt/httpd/logs/httpd.pid
+ExecStart=/opt/httpd/bin/apachectl start
+ExecReload=/opt/httpd/bin/apachectl graceful
+ExecStop=/opt/httpd/bin/apachectl stop
+KillSignal=SIGCONT
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
+
+==============================================
+
+# systemctl daemon-reload
+# systemctl enable httpd.service
+
+=============================================
+
+# grep "apache" /etc/passwd
+apache:x:48:48:Apache:/var/www:/sbin/nologin
+=>> neu chua co:
+# groupadd -r apache
+# useradd -r -s /sbin/nologin -d /var/www/ --no-create-home -g apache apache
+
+============================================
+
+# vi /opt/httpd/conf/httpd.conf
+User apache
+Group apache
+
+===========================================
+
+# /etc/init.d/httpd start
+Starting httpd: httpd: apr_sockaddr_info_get() failed for myservername，
+httpd: Could not reliably determine the server's fully qualified domain name, using 127.0.0.1 for ServerName
+https://cuongquach.com/2015/12/apache-loi-httpd-apr_sockaddr_info_get-failed-khi-start-dich-vu/
+
+==========================================
+
+# ln -s /opt/httpd/bin/apachectl /usr/bin/apachectl
+# ln -s /opt/httpd/bin/httpd /usr/bin/httpd
+# systemctl start httpd.service

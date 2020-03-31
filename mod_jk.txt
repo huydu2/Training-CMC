@@ -1,0 +1,66 @@
+wget https://mirror.downloadvn.com/apache/tomcat/tomcat-connectors/jk/tomcat-connectors-1.2.48-src.tar.gz
+# tar xf tomcat-connectors-1.2.48-src.tar.gz 
+# cd tomcat-connectors-1.2.48-src/native/
+
+# ./configure --with-apxs=/opt/httpd/bin/apxs
+# make
+# libtool --finish /opt/httpd/modules
+# make install
+
+======================================================
+
+vi /opt/httpd/conf/workers.properties
+
+###https://tomcat.apache.org/connectors-doc/reference/workers.html
+# The load balancer worker balance1 will distribute
+# load to the members worker1 and worker2
+worker.list=lb_was, status
+worker.status.type=status
+worker.lb_was.type=lb
+worker.lb_was.balance_workers=was1, was2
+worker.was1.type=ajp13
+worker.was1.host=jenkins1
+worker.was1.port=8009
+worker.was1.socket_timeout=10
+worker.was2.type=ajp13
+worker.was2.host=jenkins2
+worker.was2.port=8009
+worker.was2.socket_timeout=10
+
+======================================================
+
+vi /opt/httpd/conf/httpd.conf
+LoadModule jk_module modules/mod_jk.so
+
+JkWorkersFile "/opt/httpd/conf/workers.properties"
+JkLogFile     "/opt/httpd/logs/mod_jk.log"
+JkShmFile     "/opt/httpd/logs/mod_jk.shm"
+JkLogLevel  info
+JkLogStampFormat "[%a %b %d %H:%M:%S %Y] "
+JkOptions     +ForwardKeySize +ForwardURICompat -ForwardDirectories
+JkRequestLogFormat     "%w %V %T"
+
+=====================================================
+apachectl configtest
+Restart Apache. Check the log file mod_jk.log for any issues:
+cat /opt/httpd/logs/mod_jk.log   
+[Sun Dec 03 10:08:57 2017] [7005:140288381306848] [info] init_jk::mod_jk.c (3595): mod_jk/1.2.42 initialized
+
+====================================================
+node was1:
+vi /opt/tomcat/conf/server.xml
+sua <Engine name="Catalina" defaultHost="localhost"> =>
+<Engine name="Catalina" defaultHost="localhost" jvmRoute="was1">
+node was2:
+vi /opt/tomcat/conf/server.xml
+sua <Engine name="Catalina" defaultHost="localhost"> =>
+<Engine name="Catalina" defaultHost="localhost" jvmRoute="was2">
+=> restart tomcat
+========================================================
+
+http://www.wellho.net/mouth/2038_Sticky-Sessions-with-mod-jk-httpd-to-Tomcat-.html
+http://was.com/jenkins/
+http://was.com/examples/servlets/servlet/SessionExample
+=> Session ID: 384C5CFAB7E5BC121AF81C9383B5E818.was2
+   Session ID: 384C5CFAB7E5BC121AF81C9383B5E818.was1
+http://was.com/jk-status

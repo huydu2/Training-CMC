@@ -1,0 +1,12 @@
+Virtual Host là tính năng của Apache giúp ta duy trì nhiều hơn một web server trên một máy tính. Nhiều tên cùng chia sẻ một địa chỉ IP gọi là named-based virtual hosting, và sử dụng những địa chỉ IP khác nhau cho từng domain gọi là IP-based virtual hosting
+
+vi /opt/httpd/conf/httpd.conf
+
+</IfModule>
+<VirtualHost 10.0.0.15:80>
+   ServerName was.com
+        #DocumentRoot /var/www
+        JkMount / lb_was
+        JkMount /* lb_was
+        Jkmount /jk-status status
+</VirtualHost>
